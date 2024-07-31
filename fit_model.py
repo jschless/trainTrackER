@@ -31,6 +31,27 @@ def initialize_dataset():
     return file_paths, labels
 
 
+def peak_length(y, sr, threshold_factor=1.5):
+    # Calculate the root mean square (RMS) amplitude
+    rms = librosa.feature.rms(y=y)[0]
+
+    # Apply thresholding
+    threshold = np.mean(rms) + 1.5 * np.std(rms)
+
+    # threshold = np.mean(rms) * threshold_factor
+    segments = np.where(rms > threshold)[0]
+
+    # Select target segment
+    if len(segments) > 0:
+        start_frame = segments[0]
+        end_frame = segments[-1]
+        start_time = librosa.frames_to_time(start_frame, sr=sr)
+        end_time = librosa.frames_to_time(end_frame, sr=sr)
+        return end_time - start_time
+    else:
+        return 0
+
+
 def extract_features(file_path, n_bins=10, min_freq=0, max_freq=1000):
     # takes file and outputs X for the model
     y, sr = librosa.load(file_path, sr=None)
@@ -47,7 +68,7 @@ def extract_features(file_path, n_bins=10, min_freq=0, max_freq=1000):
         bin_stft = target_stft[bin_mask]
         mean_features.append(np.mean(bin_stft))
         std_features.append(np.std(bin_stft))
-    features = np.hstack([mean_features, std_features])
+    features = np.hstack([mean_features, std_features, [peak_length(y, sr)]])
     return features
 
 
