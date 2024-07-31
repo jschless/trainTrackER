@@ -150,4 +150,4 @@ def classify_audio(file_path, model):
 if __name__ == "__main__":
     best_model = train_model_grid_search()
 
-    joblib.dump(best_model_, "./best_model.pkl")
+    joblib.dump(best_model, "./best_model.pkl")
