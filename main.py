@@ -94,9 +94,9 @@ def record_audio(classify_and_delete=False, model_file=None):
                         print(f"Train detected at {format_filename(file_name)}")
                         print(
                             f"Train detected at {format_filename(file_name)}",
-                            file=open("./train.log"),
+                            file=open("./train.log", "w+"),
                         )
-                        save_recorded_clip(frames, save_to_special_dir)
+                        save_recorded_clip(frames, save_to_special_dir=True)
                         os.remove(file_name)
                     elif classify_and_delete:
                         if VERBOSE:

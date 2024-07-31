@@ -68,7 +68,8 @@ def extract_features(file_path, n_bins=10, min_freq=0, max_freq=1000):
         bin_stft = target_stft[bin_mask]
         mean_features.append(np.mean(bin_stft))
         std_features.append(np.std(bin_stft))
-    features = np.hstack([mean_features, std_features, [peak_length(y, sr)]])
+    # features = np.hstack([mean_features, std_features, [peak_length(y, sr)]])
+    features = np.hstack([mean_features, std_features])
     return features
 
 
