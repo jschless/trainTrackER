@@ -41,7 +41,7 @@ def detect_train_horn(audio_data):
 def format_filename(filename):
     # 'train_horn_20240326_115843.wav' turn this into DTG
     dtg = filename[filename.find("train_horn_") + 11 : -4]
-    dt = datetime.strptime(dtg, "%Y%m%d_%H%M%S")
+    dt = datetime.datetime.strptime(dtg, "%Y%m%d_%H%M%S")
     return dt.strftime("%a %d %b %Y, %I:%M%p")
 
 
