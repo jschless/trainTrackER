@@ -1,11 +1,13 @@
+import os
 import pyaudio
 import wave
 import numpy as np
-import datetime as dt
+import datetime
 import time
 import argparse
+import joblib
 
-from fit_model import extract_features
+from fit_model import extract_features, CustomFeatureExtractor
 
 
 # Parameters
@@ -15,7 +17,7 @@ RATE = 44100
 THRESHOLD = 2000
 LENGTH_THRESHOLD = 10  # number of above-threshold frames you must here within RECORD_DELAY window to classify as train
 RECORD_DELAY = 250  # number of sub-threshold frames to wait before saving clip
-VERBOSE = False
+VERBOSE = True
 
 
 def classify_audio(file_path, model):
@@ -46,7 +48,7 @@ def format_filename(filename):
 def record_audio(classify_and_delete=False, model_file=None):
     model = None
     if classify_and_delete:
-        model = joblib.load("./working_best_model.pkl")
+        model = joblib.load(model_file)
         print("Classifying in real time and only saving trains")
     else:
         print("Recording all loud sustained noises.")
@@ -88,7 +90,7 @@ def record_audio(classify_and_delete=False, model_file=None):
                         print("confirmed " + str(LENGTH_THRESHOLD) + " loud frames")
                     file_name = save_recorded_clip(frames)
 
-                    if classify_and_delete and classify_audio(file_path, model) == 1:
+                    if classify_and_delete and classify_audio(file_name, model) == 1:
                         print(f"Train detected at {format_filename(file_name)}")
                         print(
                             f"Train detected at {format_filename(file_name)}",
