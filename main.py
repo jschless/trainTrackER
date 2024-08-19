@@ -6,9 +6,9 @@ import datetime
 import time
 import argparse
 import joblib
-
+import subprocess
 from fit_model import extract_features, CustomFeatureExtractor
-
+from config import PHONE_NUMBER
 
 # Parameters
 CHUNK_SIZE = 512
@@ -17,7 +17,8 @@ RATE = 44100
 THRESHOLD = 2000
 LENGTH_THRESHOLD = 10  # number of above-threshold frames you must here within RECORD_DELAY window to classify as train
 RECORD_DELAY = 250  # number of sub-threshold frames to wait before saving clip
-VERBOSE = True
+
+BIN_PATH = "/Users/joeschlessinger/signal-cli-2/bin/signal-cli"
 
 
 def classify_audio(file_path, model):
@@ -45,7 +46,7 @@ def format_filename(filename):
     return dt.strftime("%a %d %b %Y, %I:%M%p")
 
 
-def record_audio(classify_and_delete=False, model_file=None):
+def record_audio(classify_and_delete=False, model_file=None, verbose=False):
     model = None
     if classify_and_delete:
         model = joblib.load(model_file)
@@ -74,7 +75,7 @@ def record_audio(classify_and_delete=False, model_file=None):
         audio_data = np.frombuffer(data, dtype=np.int16)
 
         if detect_train_horn(audio_data):
-            if VERBOSE:
+            if verbose:
                 print("Possible train horn detected at:", datetime.datetime.now())
             loud_frames += 1
             frames.append(data)
@@ -85,10 +86,10 @@ def record_audio(classify_and_delete=False, model_file=None):
             quiet_frames += 1
             if quiet_frames > RECORD_DELAY:
                 if loud_frames > LENGTH_THRESHOLD:
-                    if VERBOSE:
+                    if verbose:
                         print("Possible train horn ended at:", datetime.datetime.now())
                         print("confirmed " + str(LENGTH_THRESHOLD) + " loud frames")
-                    file_name = save_recorded_clip(frames)
+                    file_name = save_recorded_clip(frames, verbose=verbose)
 
                     if classify_and_delete and classify_audio(file_name, model) == 1:
                         print(f"Train detected at {format_filename(file_name)}")
@@ -96,15 +97,18 @@ def record_audio(classify_and_delete=False, model_file=None):
                             f"Train detected at {format_filename(file_name)}",
                             file=open("./train.log", "w+"),
                         )
-                        save_recorded_clip(frames, save_to_special_dir=True)
+                        save_recorded_clip(
+                            frames, save_to_special_dir=True, verbose=verbose
+                        )
+                        send_text(format_filename(file_name))
                         os.remove(file_name)
                     elif classify_and_delete:
-                        if VERBOSE:
+                        if verbose:
                             print("Not a train, deleting recording")
                         os.remove(file_name)
 
                 else:
-                    if VERBOSE:
+                    if verbose:
                         print(
                             "not identified as a train, loud_frames was ", loud_frames
                         )
@@ -119,7 +123,18 @@ def record_audio(classify_and_delete=False, model_file=None):
     p.terminate()
 
 
-def save_recorded_clip(frames, save_to_special_dir=False):
+def send_text(dtg):
+    cmd = [
+        BIN_PATH,
+        "send",
+        "-m",
+        f"Train coming by your apartment: {dtg}",
+        PHONE_NUMBER,
+    ]
+    subprocess.Popen(cmd)
+
+
+def save_recorded_clip(frames, save_to_special_dir=False, verbose=False):
     if save_to_special_dir:
         filename = f"./recordings/classified_trains/train_horn_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.wav"
     else:
@@ -130,7 +145,7 @@ def save_recorded_clip(frames, save_to_special_dir=False):
     wf.setframerate(RATE)
     wf.writeframes(b"".join(frames))
     wf.close()
-    if VERBOSE:
+    if verbose:
         print("Saved recorded clip as:", filename)
     return filename
 
@@ -144,7 +159,13 @@ if __name__ == "__main__":
         help="If you want to real time process noises and only save trains",
     )
     parser.add_argument("--model", type=str, help="Path to model", default=None)
+    parser.add_argument(
+        "--verbose",
+        type=bool,
+        default=False,
+        help="For more logging",
+    )
 
     args = parser.parse_args()
 
-    record_audio(args.classify_and_delete, args.model)
+    record_audio(args.classify_and_delete, args.model, args.verbose)
