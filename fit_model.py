@@ -36,7 +36,7 @@ def peak_length(y, sr, threshold_factor=1.5):
     rms = librosa.feature.rms(y=y)[0]
 
     # Apply thresholding
-    threshold = np.mean(rms) + 1.5 * np.std(rms)
+    threshold = np.mean(rms) + 2 * np.std(rms)
 
     # threshold = np.mean(rms) * threshold_factor
     segments = np.where(rms > threshold)[0]
@@ -68,8 +68,8 @@ def extract_features(file_path, n_bins=10, min_freq=0, max_freq=1000):
         bin_stft = target_stft[bin_mask]
         mean_features.append(np.mean(bin_stft))
         std_features.append(np.std(bin_stft))
-    # features = np.hstack([mean_features, std_features, [peak_length(y, sr)]])
-    features = np.hstack([mean_features, std_features])
+    features = np.hstack([mean_features, std_features, [peak_length(y, sr)]])
+    # features = np.hstack([mean_features, std_features])
     return features
 
 
@@ -146,6 +146,12 @@ def train_model_grid_search():
         "feature_extractor__max_freq": list(range(500, 1001, 100)),
     }
 
+    param_grid = {
+        "feature_extractor__n_bins": [10, 15, 20],
+        "feature_extractor__min_freq": [50 * i for i in range(1, 11)],
+        "feature_extractor__max_freq": [50 * i for i in range(11, 20)],
+    }
+
     grid_search = GridSearchCV(pipe, param_grid, cv=StratifiedKFold(n_splits=5))
 
     grid_search.fit(X_train_paths, y_train)
@@ -172,4 +178,4 @@ def classify_audio(file_path, model):
 if __name__ == "__main__":
     best_model = train_model_grid_search()
 
-    joblib.dump(best_model, "./best_model.pkl")
+    joblib.dump(best_model, "./best_model_with_length.pkl")
