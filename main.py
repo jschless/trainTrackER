@@ -10,7 +10,7 @@ import subprocess
 from fit_model import extract_features, CustomFeatureExtractor
 from config import PHONE_NUMBER
 import logging
-import mylib
+
 
 logger = logging.getLogger(__name__)
 
@@ -85,7 +85,7 @@ def record_audio(classify_and_delete=False, model_file=None, verbose=False):
         audio_data = np.frombuffer(data, dtype=np.int16)
 
         if detect_train_horn(audio_data):
-            logger.info("Possible train horn detected at:", datetime.datetime.now())
+            logger.info(f"Possible train horn detected at: {datetime.datetime.now()}")
             if verbose:
                 print("Possible train horn detected at:", datetime.datetime.now())
             loud_frames += 1
