@@ -98,7 +98,7 @@ def record_audio(classify_and_delete=False, model_file=None, verbose=False):
             if quiet_frames > RECORD_DELAY:
                 if loud_frames > LENGTH_THRESHOLD:
                     logger.info(
-                        "Possible train horn ended at:", datetime.datetime.now()
+                        f"Possible train horn ended at: {datetime.datetime.now()}"
                     )
                     logger.info("confirmed " + str(LENGTH_THRESHOLD) + " loud frames")
 
@@ -158,7 +158,7 @@ def save_recorded_clip(frames, save_to_special_dir=False, verbose=False):
     wf.setframerate(RATE)
     wf.writeframes(b"".join(frames))
     wf.close()
-    logger.info("Saved recorded clip as:", filename)
+    logger.info(f"Saved recorded clip as {filename}")
     if verbose:
         print("Saved recorded clip as:", filename)
     return filename

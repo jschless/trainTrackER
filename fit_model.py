@@ -1,11 +1,17 @@
 import os
 import numpy as np
 import librosa
-
+import matplotlib.pyplot as plt
+import seaborn as sns
 from sklearn.model_selection import train_test_split, GridSearchCV, StratifiedKFold
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import make_scorer, accuracy_score, classification_report
+from sklearn.metrics import (
+    make_scorer,
+    accuracy_score,
+    classification_report,
+    confusion_matrix,
+)
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.pipeline import Pipeline
 import joblib
@@ -91,7 +97,9 @@ class CustomFeatureExtractor(BaseEstimator, TransformerMixin):
         )
 
 
-def train_model_explicit(n_bins, min_freq, max_freq, save=False, file_name=None):
+def train_model_explicit(
+    n_bins, min_freq, max_freq, save=False, file_name=None, confusion=None
+):
     file_paths, labels = initialize_dataset()
 
     X = np.array(
@@ -119,6 +127,21 @@ def train_model_explicit(n_bins, min_freq, max_freq, save=False, file_name=None)
     print("Classification Report:")
     print(classification_report(y_test, y_pred))
 
+    if confusion:
+        cm = confusion_matrix(y_test, y_pred)
+        plt.figure(figsize=(10, 7))
+        sns.heatmap(
+            cm,
+            annot=True,
+            fmt="d",
+            cmap="Blues",
+            xticklabels=["Not Train", "Train"],
+            yticklabels=["Not Train", "Train"],
+        )
+        plt.title("Confusion Matrix")
+        plt.xlabel("Predicted Label")
+        plt.ylabel("True Label")
+        plt.savefig(confusion)
     if save:
         joblib.dump(clf, f"./{file_name}.pkl")
 
